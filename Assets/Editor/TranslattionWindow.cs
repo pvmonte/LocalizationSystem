@@ -7,18 +7,39 @@ public class TranslattionWindow : EditorWindow
 {
     string myString = "Hello";
     static CsvLoader loader;
+    static List<CsvEditorRow> rows;
+
+    //Size configurations
+    float endLineButtonsSize = 18;
+    float rowElementsSize = 50;
 
     [MenuItem("Window/Translation")]
     public static void ShowWindow()
     {
         GetWindow<TranslattionWindow>("Translation Manager");
+        InitializeRows();
+    }
+
+    private static void InitializeRows()
+    {
         loader = new CsvLoader();
+        rows = new List<CsvEditorRow>();
+
+        for (int i = 0; i < loader.tableLines.Count; i++)
+        {
+            CsvEditorRow row = new CsvEditorRow(loader.tableLines[i], false);
+            rows.Add(row);
+        }
     }
 
     private void OnGUI()
     {
-        if(loader == null)
-            loader = new CsvLoader();
+        float windowWidth = position.width;
+        float usableWidth = windowWidth - endLineButtonsSize * 3;
+        rowElementsSize = usableWidth / 3;
+
+        if (loader == null)
+            InitializeRows();
 
         EditorGUILayout.BeginVertical();        
 
@@ -39,10 +60,10 @@ public class TranslattionWindow : EditorWindow
 
         for (int i = 0; i < header.Length; i++)
         {
-            GUILayout.Label(header[0]);
+            EditorGUILayout.LabelField(header[i], GUILayout.Width(rowElementsSize));
         }
 
-        if (GUILayout.Button("+", GUILayout.Width(18)))
+        if (GUILayout.Button("+", GUILayout.Width(endLineButtonsSize)))
         {
             //TODO
             Debug.Log("Include Column");
@@ -53,7 +74,7 @@ public class TranslattionWindow : EditorWindow
 
     public void BuildAllLocalizationRows()
     {
-        for (int i = 1; i < loader.tableLines.Count; i++)
+        for (int i = 1; i < rows.Count; i++)
         {
             BuildLocalizationRow(i);
         }
@@ -62,15 +83,17 @@ public class TranslattionWindow : EditorWindow
     public void BuildLocalizationRow(int line)
     {
         EditorGUILayout.BeginHorizontal();
-        var tableLines = loader.tableLines;
 
-        BuildLocalizationRowFields(tableLines[line]);
-        for (int i = 1; i < tableLines.Count; i++)
+        BuildLocalizationRowFields(rows[line]);
+
+        if (GUILayout.Button("E", GUILayout.Width(endLineButtonsSize)))
         {
-            
+            //TODO
+            rows[line].isEditing = true;
+            Debug.Log("Editing");
         }
 
-        if (GUILayout.Button("-", GUILayout.Width(18)))
+        if (GUILayout.Button("-", GUILayout.Width(endLineButtonsSize)))
         {
             //TODO
             Debug.Log("Excluded");
@@ -79,11 +102,18 @@ public class TranslattionWindow : EditorWindow
         EditorGUILayout.EndHorizontal();
     }
 
-    public void BuildLocalizationRowFields(string[] line)
+    public void BuildLocalizationRowFields(CsvEditorRow row)
     {
-        for (int i = 0; i < line.Length; i++)
+        for (int i = 0; i < row.elements.Length; i++)
         {
-            EditorGUILayout.TextField(line[i]);            
+            if (row.isEditing)
+            {
+                GUILayout.TextArea(row.elements[i], GUILayout.Width(rowElementsSize));                
+            }
+            else
+            {
+                EditorGUILayout.LabelField(row.elements[i], GUILayout.Width(rowElementsSize));
+            }
         }
     }
 
@@ -98,6 +128,10 @@ public class TranslattionWindow : EditorWindow
         if (GUILayout.Button("Save"))
         {
             //TODO
+            foreach (var item in rows)
+            {
+                item.isEditing = false;
+            }
             Debug.Log("Saved");
         }
 
@@ -106,5 +140,17 @@ public class TranslattionWindow : EditorWindow
             //TODO
             ShowWindow();
         }
+    }
+}
+
+public class CsvEditorRow
+{
+    public string[] elements;
+    public bool isEditing;
+
+    public CsvEditorRow(string[] elements, bool isEditing)
+    {
+        this.elements = elements;
+        this.isEditing = isEditing;
     }
 }
