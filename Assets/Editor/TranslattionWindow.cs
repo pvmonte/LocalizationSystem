@@ -5,13 +5,13 @@ using UnityEditor;
 
 public class TranslattionWindow : EditorWindow
 {
-    string myString = "Hello";
     static CsvLoader loader;
     static List<CsvEditorRow> rows;
 
     //Size configurations
     float endLineButtonsSize = 18;
     float rowElementsSize = 50;
+    private Vector2 scrollPos;
 
     [MenuItem("Window/Translation")]
     public static void ShowWindow()
@@ -27,29 +27,38 @@ public class TranslattionWindow : EditorWindow
 
         for (int i = 0; i < loader.tableLines.Count; i++)
         {
-            CsvEditorRow row = new CsvEditorRow(loader.tableLines[i], false);
+            List<string> list = new List<string>();
+            list.AddRange(loader.tableLines[i]);
+
+            CsvEditorRow row = new CsvEditorRow(list, false);
             rows.Add(row);
         }
     }
-
+    
     private void OnGUI()
     {
         float windowWidth = position.width;
         float usableWidth = windowWidth - endLineButtonsSize * 3;
-        rowElementsSize = usableWidth / 3;
+        rowElementsSize = 120;        
 
         if (loader == null)
             InitializeRows();
 
+        //scrollPos = EditorGUILayout.BeginScrollView(Vector2.zero, GUILayout.Width(rowElementsSize));
+
         EditorGUILayout.BeginVertical();        
 
-        BuildHeader();       
+        BuildHeader();        
 
         BuildAllLocalizationRows();
+
+        //EditorGUILayout.EndScrollView();
 
         EditorGUILayout.EndVertical();
 
         BuildFooterButtons();
+
+        
         
     }
 
@@ -104,7 +113,7 @@ public class TranslattionWindow : EditorWindow
 
     public void BuildLocalizationRowFields(CsvEditorRow row)
     {
-        for (int i = 0; i < row.elements.Length; i++)
+        for (int i = 0; i < row.elements.Count; i++)
         {
             if (row.isEditing)
             {
@@ -140,17 +149,5 @@ public class TranslattionWindow : EditorWindow
             //TODO
             ShowWindow();
         }
-    }
-}
-
-public class CsvEditorRow
-{
-    public string[] elements;
-    public bool isEditing;
-
-    public CsvEditorRow(string[] elements, bool isEditing)
-    {
-        this.elements = elements;
-        this.isEditing = isEditing;
     }
 }

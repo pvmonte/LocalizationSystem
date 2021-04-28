@@ -10,6 +10,7 @@ public class CsvLoader
     char[] columnSeparators = new char[] { ',' };
 
     TextAsset csvFile;
+    public List<string> header = new List<string>();
     public List<string[]> tableLines = new List<string[]>();
 
     public CsvLoader()
@@ -27,7 +28,10 @@ public class CsvLoader
         LoadCsv();        
         string[] lines = csvFile.text.Split(lineSeparators);
 
-        for (int i = 0; i < lines.Length; i++)
+        var headerLine = SplitLineToValues(lines[0]);
+        header.AddRange(headerLine); 
+
+        for (int i = 1; i < lines.Length; i++)
         {
             var tableLine = SplitLineToValues(lines[i]);
             tableLines.Add(tableLine);            
