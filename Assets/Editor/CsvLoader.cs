@@ -42,4 +42,30 @@ public class CsvLoader
     {
         return line.Split(columnSeparators);
     }
+
+    public void Add(string key, params string[] texts)
+    {
+        string appended = "";
+
+        for (int i = 0; i < texts.Length; i++)
+        {
+            if(i == 0)
+            {
+                appended += $"{texts[i]}";
+                continue;
+            }
+            
+            appended += $",{texts[i]}";
+        }
+
+        if(string.IsNullOrEmpty(key))
+        {
+            throw new System.ArgumentException("key must have a value");
+        }
+
+        string appendedLine = $"\n{appended}";
+        Debug.Log(appendedLine);
+        File.AppendAllText("Assets/Resources/localization.csv", appendedLine);
+        UnityEditor.AssetDatabase.Refresh();        
+    }
 }

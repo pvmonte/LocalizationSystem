@@ -19,6 +19,10 @@ public class LocalizationWindow : EditorWindow
 
     static List<string> keysColumn = new List<string>();
 
+    //Add Parametter
+    static List<string> newKeysColumn = new List<string>();
+    static List<CsvEditorRow> newRows = new List<CsvEditorRow>();
+
     [MenuItem("Window/Localization")]
     public static void ShowWindow()
     {
@@ -176,17 +180,42 @@ public class LocalizationWindow : EditorWindow
         if (GUILayout.Button("+"))
         {
             //TODO
-            var newRow = new CsvEditorRow(rows[0].elements, true);
+            List<string> elements = new List<string>();
+
+            for (int i = 0; i < rows[0].elements.Count; i++)
+            {
+                elements.Add("");
+            }
+
+            var newRow = new CsvEditorRow(elements, true);
             newRow.elements[0] = "new-key";
 
-            keysColumn.Add("");
+            keysColumn.Add("new-key");
+            newKeysColumn.Add("new-key");
             rows.Add(newRow);
+            newRows.Add(newRow);
             Debug.Log("Ading");
+            
         }
 
         if (GUILayout.Button("Save"))
         {
             //TODO
+            for (int i = 0; i < newKeysColumn.Count; i++)
+            {
+                var key = newKeysColumn[i];
+
+                try
+                {
+                    var rowElements = newRows[i].elements.ToArray();
+                    loader.Add(key, rowElements);
+                }
+                catch (System.Exception)
+                {
+                    loader.Add(key);
+                }
+            }            
+
             foreach (var item in rows)
             {
                 item.isEditing = false;
