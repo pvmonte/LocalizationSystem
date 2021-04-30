@@ -5,8 +5,9 @@ Goals:
 1. Read a .csv file; - WORKING
 2. Build a table with the values in an Editor Window; - WORKING
 3. Edit .csv file in Editor Window;
-3.1 Add row (key, values);
-3.2 Add columns (add language);
+3.1 Add row (key, values); - WORKING
+3.2 Add columns (add language); - WORKING
+3.3 Edit table values;
 4. Apply values by key in UI;
 5. Search row by key in table;
 6. Search row by value in table.
