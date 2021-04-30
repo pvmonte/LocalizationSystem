@@ -19,8 +19,11 @@ public class LocalizationWindow : EditorWindow
 
     static List<string> keysColumn = new List<string>();
 
-    bool addingToHeader;
+    bool isAddingToHeader;
     string valueAdding;
+
+    bool isEditingRow;
+    int editingLineIndex;
 
     //Add Parametter
     static List<string> newKeysColumn = new List<string>();
@@ -37,6 +40,10 @@ public class LocalizationWindow : EditorWindow
     {
         loader = new CsvLoader();
         rows = new List<CsvEditorRow>();
+
+        keysColumn = new List<string>();
+        newKeysColumn = new List<string>();
+        newRows = new List<CsvEditorRow>();
 
         for (int i = 0; i < loader.tableLines.Count; i++)
         {
@@ -84,7 +91,7 @@ public class LocalizationWindow : EditorWindow
             EditorGUILayout.LabelField(header[i], rowElementsWidth);
         }
 
-        if(addingToHeader)
+        if(isAddingToHeader)
         {
             valueAdding = GUILayout.TextArea(valueAdding, GUILayout.Width(75));
 
@@ -92,7 +99,7 @@ public class LocalizationWindow : EditorWindow
             {
                 CsvSaver saver = new CsvSaver(loader);
                 saver.AddColumn(valueAdding);
-                addingToHeader = false;
+                isAddingToHeader = false;
                 valueAdding = string.Empty;
 
                 Refresh();
@@ -102,7 +109,7 @@ public class LocalizationWindow : EditorWindow
         {
             if (GUILayout.Button("+", endLineButtonsWidth))
             {
-                addingToHeader = true;
+                isAddingToHeader = true;
             }
         }
 
@@ -175,13 +182,19 @@ public class LocalizationWindow : EditorWindow
 
             if(GUILayout.Button("E", endLineButtonsWidth))
             {
+                isEditingRow = true;
                 rows[i].isEditing = true;
+                editingLineIndex = i;
             }
 
             if (GUILayout.Button("-", endLineButtonsWidth))
             {
+                CsvSaver saver = new CsvSaver(loader);
+                saver.RemoveLine(i);
                 rows.RemoveAt(i);
                 keysColumn.RemoveAt(i);
+
+                Refresh();
             }
 
             EditorGUILayout.EndHorizontal();
@@ -192,74 +205,85 @@ public class LocalizationWindow : EditorWindow
 
     void BuildFooterButtons()
     {
-        if (GUILayout.Button("+"))
+        if (isEditingRow)
         {
-            //TODO
-            List<string> elements = new List<string>();
-
-            for (int i = 0; i < loader.header.Count; i++)
+            if (GUILayout.Button("Confirm"))
             {
-                elements.Add("");
-            }
-
-            var newRow = new CsvEditorRow(elements, true);
-            newRow.elements[0] = "new-key";
-
-            keysColumn.Add("new-key");
-            newKeysColumn.Add("new-key");
-            rows.Add(newRow);
-            newRows.Add(newRow);
-            Debug.Log("Ading");
-            
-        }
-
-        if (GUILayout.Button("Save"))
-        {
-            //TODO
-            for (int i = 0; i < newKeysColumn.Count; i++)
-            {
-                newKeysColumn[i] = keysColumn[keysColumn.Count - 1];
-                newRows[i].elements[0] = newKeysColumn[i];
-
-                var rowElements = newRows[i].elements.ToArray();
-                Debug.Log(string.Join(",", rowElements));
+                //TODO
                 CsvSaver saver = new CsvSaver(loader);
-                saver.AddLine(rowElements);
+                string lineString = rows[editingLineIndex].RowToString(false);
+                saver.EditLineByIndex(editingLineIndex, lineString);                
+                isEditingRow = false;
             }
 
-            newKeysColumn.Clear();
-            newRows.Clear();
-            //
-
-            foreach (var item in rows)
+            if (GUILayout.Button("Cancel"))
             {
-                item.isEditing = false;
+                rows[editingLineIndex].isEditing = false;
+                editingLineIndex = -1;                
+                isEditingRow = false;
             }
-            Debug.Log("Saved");
         }
-
-        if (GUILayout.Button("Refresh"))
+        else
         {
-            //TODO
-            Refresh();
+            if (GUILayout.Button("+"))
+            {
+                //TODO
+                List<string> elements = new List<string>();
+
+                for (int i = 0; i < loader.header.Count; i++)
+                {
+                    elements.Add("");
+                }
+
+                var newRow = new CsvEditorRow(elements, true);
+                newRow.elements[0] = "new-key";
+
+                keysColumn.Add("new-key");
+                newKeysColumn.Add("new-key");
+                rows.Add(newRow);
+                newRows.Add(newRow);
+                Debug.Log("Ading");
+
+            }
+
+            if (GUILayout.Button("Save"))
+            {
+                //TODO
+                for (int i = 0; i < newKeysColumn.Count; i++)
+                {
+                    newKeysColumn[i] = keysColumn[keysColumn.Count - 1];
+                    newRows[i].elements[0] = newKeysColumn[i];
+
+                    var rowElements = newRows[i].elements.ToArray();
+
+
+                    Debug.Log(string.Join(",", rowElements));
+                    CsvSaver saver = new CsvSaver(loader);
+                    saver.AddLine(rowElements);
+                }
+
+                newKeysColumn.Clear();
+                newRows.Clear();
+
+
+                foreach (var item in rows)
+                {
+                    item.isEditing = false;
+                }
+                Debug.Log("Saved");
+            }
+
+            if (GUILayout.Button("Refresh"))
+            {
+                //TODO
+                Refresh();
+            }
         }
     }
 
     private static void Refresh()
     {
         AssetDatabase.Refresh();
-        //InitializeRows();
-    }
-}
-
-public class CsvEditorRow
-{
-    public List<string> elements;
-    public bool isEditing;
-
-    public CsvEditorRow(List<string> elements, bool isEditing)
-    {
-        this.elements = elements;
-        this.isEditing = isEditing;
+        InitializeRows();
     }
 }
