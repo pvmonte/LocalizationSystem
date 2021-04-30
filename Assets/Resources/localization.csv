@@ -1,6 +1,5 @@
-key,PT,EN
-hello,Olá,Hello
-bye,Tchau,Good Bye
-new-key,afsdf,qewrqre
-new-key,afsdf,qewrqre
-new-key,,
+key,PT,EN,SP
+hello,olá,hello,
+new-key,bla,ben,
+hello,bla,ben,ware
+ying,yang,yo,modernalce

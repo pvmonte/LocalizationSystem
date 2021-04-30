@@ -19,6 +19,9 @@ public class LocalizationWindow : EditorWindow
 
     static List<string> keysColumn = new List<string>();
 
+    bool addingToHeader;
+    string valueAdding;
+
     //Add Parametter
     static List<string> newKeysColumn = new List<string>();
     static List<CsvEditorRow> newRows = new List<CsvEditorRow>();
@@ -81,13 +84,25 @@ public class LocalizationWindow : EditorWindow
             EditorGUILayout.LabelField(header[i], rowElementsWidth);
         }
 
-        if (GUILayout.Button("+", endLineButtonsWidth))
+        if(addingToHeader)
         {
-            header.Add("DEFAULT");
+            valueAdding = GUILayout.TextArea(valueAdding, GUILayout.Width(75));
 
-            for (int i = 0; i < rows.Count; i++)
+            if (GUILayout.Button("Confirm", GUILayout.Width(75)))
             {
-                rows[i].elements.Add("DEFAULT");
+                CsvSaver saver = new CsvSaver(loader);
+                saver.AddColumn(valueAdding);
+                addingToHeader = false;
+                valueAdding = string.Empty;
+
+                Refresh();
+            }
+        }
+        else
+        {
+            if (GUILayout.Button("+", endLineButtonsWidth))
+            {
+                addingToHeader = true;
             }
         }
 
@@ -182,7 +197,7 @@ public class LocalizationWindow : EditorWindow
             //TODO
             List<string> elements = new List<string>();
 
-            for (int i = 0; i < rows[0].elements.Count; i++)
+            for (int i = 0; i < loader.header.Count; i++)
             {
                 elements.Add("");
             }
@@ -203,18 +218,18 @@ public class LocalizationWindow : EditorWindow
             //TODO
             for (int i = 0; i < newKeysColumn.Count; i++)
             {
-                var key = newKeysColumn[i];
+                newKeysColumn[i] = keysColumn[keysColumn.Count - 1];
+                newRows[i].elements[0] = newKeysColumn[i];
 
-                try
-                {
-                    var rowElements = newRows[i].elements.ToArray();
-                    loader.Add(key, rowElements);
-                }
-                catch (System.Exception)
-                {
-                    loader.Add(key);
-                }
-            }            
+                var rowElements = newRows[i].elements.ToArray();
+                Debug.Log(string.Join(",", rowElements));
+                CsvSaver saver = new CsvSaver(loader);
+                saver.AddLine(rowElements);
+            }
+
+            newKeysColumn.Clear();
+            newRows.Clear();
+            //
 
             foreach (var item in rows)
             {
@@ -226,8 +241,14 @@ public class LocalizationWindow : EditorWindow
         if (GUILayout.Button("Refresh"))
         {
             //TODO
-            //InitializeRows();
+            Refresh();
         }
+    }
+
+    private static void Refresh()
+    {
+        AssetDatabase.Refresh();
+        //InitializeRows();
     }
 }
 
