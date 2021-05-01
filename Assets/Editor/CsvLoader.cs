@@ -31,22 +31,26 @@ public class CsvLoader
         lines = csvFile.text.Split(lineSeparator);
     }
 
-    string[] SplitLineToValues(string line)
-    {
-        return line.Split(fieldSeparators);
-    }
-
     public void AddLine(string line)
     {
         var key = line.Split(fieldSeparators)[0];
+        Debug.Log($"key {key}");
 
-        string[] thisKey = lines.Where(x => x.Split(fieldSeparators)[0] == key).ToArray();
-        if (thisKey != null)
+        //Search if there is matching keys
+        string[] matchingKeys = lines.Where(x => x.Split(fieldSeparators)[0] == key).ToArray();
+        Debug.Log($"matchingKeys length {matchingKeys.Length}");
+
+        if (matchingKeys.Length > 0)
         {
             Debug.LogError("Key already exits");
             return;
         }
 
+        AddLineToEnd(line);
+    }
+
+    private void AddLineToEnd(string line)
+    {
         var apended = $"\n{line}";
         File.AppendAllText(absolutePath, apended);
         UnityEditor.AssetDatabase.Refresh();
@@ -93,7 +97,7 @@ public class CsvLoader
         string[] editingLine = lines.Where(x => x.Split(fieldSeparators)[0] == key).ToArray();
 
         Remove(key);
-        AddLine(line);
+        AddLineToEnd(line);
         UnityEditor.AssetDatabase.Refresh();
     }
 
@@ -112,6 +116,9 @@ public class CsvLoader
 
             lines[i] = string.Join(",", lines[i], newCell);
         }
+
+        string text = string.Join(lineSeparator.ToString(), lines);
+        File.WriteAllText(absolutePath, text);
 
         UnityEditor.AssetDatabase.Refresh();
     }

@@ -31,8 +31,7 @@ public class LineDrawer
 
         for (int i = 0; i < cells; i++)
         {
-            values[i] = cellDrawer.DrawField(values[i]);            
-            Debug.Log(values[i]);
+            values[i] = cellDrawer.DrawField(values[i]);
         }
 
         EditorGUILayout.EndHorizontal();
