@@ -29,7 +29,7 @@ public class CsvSaver
             }            
             else
             {
-                string[] lineAsArray = lines[i].Split(loader.columnSeparators);
+                string[] lineAsArray = lines[i].Split(loader.fieldSeparators);
                 string[] newLineAsArray = new string[lineAsArray.Length + 1];
 
                 for (int j = 0; j < lineAsArray.Length; j++)
@@ -122,7 +122,7 @@ public class CsvSaver
         {
             string line = lines[i];
 
-            keys[i] = line.Split(loader.columnSeparators, System.StringSplitOptions.None)[0];
+            keys[i] = line.Split(loader.fieldSeparators, System.StringSplitOptions.None)[0];
         }
 
         return keys;

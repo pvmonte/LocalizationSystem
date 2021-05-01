@@ -5,8 +5,14 @@ using UnityEditor;
 
 public class LocalizationWindow : EditorWindow
 {
-    static CsvLoader loader;
+    static CsvLoader csvLoader;
     static List<CsvEditorRow> rows;
+
+    static bool isAdding;
+    static string[] newLine;
+
+    bool isEditingLine;
+    int editingLineIndex;
 
     //Size configurations
     static float endLineButtonsSize = 18;
@@ -17,13 +23,13 @@ public class LocalizationWindow : EditorWindow
     static GUILayoutOption endLineButtonsWidth = GUILayout.Width(endLineButtonsSize);
     static GUILayoutOption rowElementsWidth = GUILayout.Width(rowElementsSize);
 
+
     static List<string> keysColumn = new List<string>();
 
     bool isAddingToHeader;
     string valueAdding;
 
-    bool isEditingRow;
-    int editingLineIndex;
+
 
     //Add Parametter
     static List<string> newKeysColumn = new List<string>();
@@ -38,163 +44,133 @@ public class LocalizationWindow : EditorWindow
 
     private static void InitializeRows()
     {
-        loader = new CsvLoader();
+        csvLoader = new CsvLoader();
         rows = new List<CsvEditorRow>();
 
         keysColumn = new List<string>();
         newKeysColumn = new List<string>();
         newRows = new List<CsvEditorRow>();
-
-        for (int i = 0; i < loader.tableLines.Count; i++)
+        /*
+        for (int i = 0; i < csvLoader.tableLines.Count; i++)
         {
-            var line = loader.tableLines[i];
+            var line = csvLoader.tableLines[i];
             List<string> list = new List<string>();
             list.AddRange(line);
             CsvEditorRow row = new CsvEditorRow(list, false);
             keysColumn.Add(line[0]);
             rows.Add(row);
         }
+        */
     }
 
     private void OnGUI()
     {
         float windowWidth = position.width;
-        usableWidth = windowWidth - rowElementsSize - endLineButtonsSize * 3;
+        usableWidth = windowWidth - endLineButtonsSize * 3;
 
-        if (loader == null)
+        if (csvLoader == null)
             InitializeRows();
-
-        BuildHeader();
 
         EditorGUILayout.BeginHorizontal();
 
-        BuildKeysColumn();
+        scrollPos = EditorGUILayout.BeginScrollView(Vector2.zero, GUILayout.Width(usableWidth));
+
+        EditorGUILayout.BeginVertical();
+
+        BuildHeader();
 
         BuildTableContent();
+
+        EditorGUILayout.EndVertical();
+
+        EditorGUILayout.EndScrollView();
 
         BuildButtonsColumn();
 
         EditorGUILayout.EndHorizontal();
 
         BuildFooterButtons();
-
-
     }
 
     public void BuildHeader()
     {
         EditorGUILayout.BeginHorizontal();
-        var header = loader.header;
 
-        for (int i = 0; i < header.Count; i++)
-        {
-            EditorGUILayout.LabelField(header[i], rowElementsWidth);
-        }
+        string[] lines = csvLoader.lines;
+        var header = lines[0];
 
-        if(isAddingToHeader)
-        {
-            valueAdding = GUILayout.TextArea(valueAdding, GUILayout.Width(75));
-
-            if (GUILayout.Button("Confirm", GUILayout.Width(75)))
-            {
-                CsvSaver saver = new CsvSaver(loader);
-                saver.AddColumn(valueAdding);
-                isAddingToHeader = false;
-                valueAdding = string.Empty;
-
-                Refresh();
-            }
-        }
-        else
-        {
-            if (GUILayout.Button("+", endLineButtonsWidth))
-            {
-                isAddingToHeader = true;
-            }
-        }
+        var lineDrawer = new LineDrawer(new CellDrawer());
+        lineDrawer.Draw(header);
 
         EditorGUILayout.EndHorizontal();
     }
 
-    void BuildKeysColumn()
+    void BuildTableContent()
     {
-        EditorGUILayout.BeginVertical(rowElementsWidth);
+        string[] lines = csvLoader.lines;
 
-        for (int i = 0; i < keysColumn.Count; i++)
+        for (int i = 1; i < lines.Length; i++)
         {
-            var row = rows[i];
-
-            //TODO: Find a way to better this code
-            if (row.isEditing)
+            if (editingLineIndex == i)
             {
-                keysColumn[i] = GUILayout.TextArea(keysColumn[i], rowElementsWidth);
+                LineEditing(lines[editingLineIndex]);
             }
             else
             {
-                EditorGUILayout.LabelField(keysColumn[i], rowElementsWidth);
+                var lineDrawer = new LineDrawer(new CellDrawer());
+                lineDrawer.Draw(lines[i]);
             }
         }
 
-        EditorGUILayout.EndVertical();
+        if (isAdding)
+        {
+            LineEditing(lines[0]);
+        }
     }
 
-    void BuildTableContent()
+    private static void LineEditing(string line)
     {
-        scrollPos = EditorGUILayout.BeginScrollView(Vector2.zero, GUILayout.Width(usableWidth));
-        
-        for (int i = 0; i < rows.Count; i++)
-        {
-            EditorGUILayout.BeginHorizontal();
+        if (newLine == null)
+            newLine = line.Split(',');
 
-            var row = rows[i];
-
-            for (int j = 1; j < row.elements.Count; j++)
-            {
-                DrawRowElement(j, row, row.elements);
-            }
-
-            EditorGUILayout.EndHorizontal();
-        }
-
-        EditorGUILayout.EndScrollView();
-    }
-
-    private static void DrawRowElement(int i, CsvEditorRow row, List<string> elementsArray)
-    {
-        if (row.isEditing)
-        {
-            elementsArray[i] = GUILayout.TextArea(elementsArray[i], rowElementsWidth);
-        }
-        else
-        {
-            EditorGUILayout.LabelField(elementsArray[i], rowElementsWidth);
-        }
+        var lineDrawer = new LineDrawer(new CellDrawer());
+        lineDrawer.DrawEditingLine(newLine.Length, newLine);
     }
 
     void BuildButtonsColumn()
     {
-        EditorGUILayout.BeginVertical(GUILayout.Width(endLineButtonsSize * 3));
+        if (isAdding && isEditingLine)
+            return;
 
+        EditorGUILayout.BeginVertical(GUILayout.Width(endLineButtonsSize * 2));
 
-        for (int i = 0; i < rows.Count; i++)
-        {            
+        string[] lines = csvLoader.lines;
+
+        for (int i = 0; i < lines.Length; i++)
+        {
             EditorGUILayout.BeginHorizontal();
 
-            if(GUILayout.Button("E", endLineButtonsWidth))
+            if (i == 0)
             {
-                isEditingRow = true;
-                rows[i].isEditing = true;
-                editingLineIndex = i;
+                var cell = new CellDrawer();
+                cell.DrawEmpty(20);
             }
-
-            if (GUILayout.Button("-", endLineButtonsWidth))
+            else
             {
-                CsvSaver saver = new CsvSaver(loader);
-                saver.RemoveLine(i);
-                rows.RemoveAt(i);
-                keysColumn.RemoveAt(i);
+                var lineButtonDrawer = new LineButtonDrawer();
+                lineButtonDrawer.Draw("E", () =>
+                {
+                    isEditingLine = true;
+                    editingLineIndex = i;
+                });
 
-                Refresh();
+                string[] keys = new string[lines.Length];
+                string key = lines[i].Split(',')[0];
+
+                lineButtonDrawer.Draw("-", () => {
+                    csvLoader.Remove(key);
+                    Refresh();
+                });
             }
 
             EditorGUILayout.EndHorizontal();
@@ -205,80 +181,60 @@ public class LocalizationWindow : EditorWindow
 
     void BuildFooterButtons()
     {
-        if (isEditingRow)
+        if (isEditingLine || isAdding)
         {
-            if (GUILayout.Button("Confirm"))
-            {
-                //TODO
-                CsvSaver saver = new CsvSaver(loader);
-                string lineString = rows[editingLineIndex].RowToString(false);
-                saver.EditLineByIndex(editingLineIndex, lineString);                
-                isEditingRow = false;
-            }
-
-            if (GUILayout.Button("Cancel"))
-            {
-                rows[editingLineIndex].isEditing = false;
-                editingLineIndex = -1;                
-                isEditingRow = false;
-            }
+            DrawEditingButtons();
         }
         else
         {
-            if (GUILayout.Button("+"))
-            {
-                //TODO
-                List<string> elements = new List<string>();
-
-                for (int i = 0; i < loader.header.Count; i++)
-                {
-                    elements.Add("");
-                }
-
-                var newRow = new CsvEditorRow(elements, true);
-                newRow.elements[0] = "new-key";
-
-                keysColumn.Add("new-key");
-                newKeysColumn.Add("new-key");
-                rows.Add(newRow);
-                newRows.Add(newRow);
-                Debug.Log("Ading");
-
-            }
-
-            if (GUILayout.Button("Save"))
-            {
-                //TODO
-                for (int i = 0; i < newKeysColumn.Count; i++)
-                {
-                    newKeysColumn[i] = keysColumn[keysColumn.Count - 1];
-                    newRows[i].elements[0] = newKeysColumn[i];
-
-                    var rowElements = newRows[i].elements.ToArray();
-
-
-                    Debug.Log(string.Join(",", rowElements));
-                    CsvSaver saver = new CsvSaver(loader);
-                    saver.AddLine(rowElements);
-                }
-
-                newKeysColumn.Clear();
-                newRows.Clear();
-
-
-                foreach (var item in rows)
-                {
-                    item.isEditing = false;
-                }
-                Debug.Log("Saved");
-            }
-
-            if (GUILayout.Button("Refresh"))
-            {
-                //TODO
-                Refresh();
-            }
+            DrawNormalfooterButtons();
         }
+    }
+
+    private void DrawEditingButtons()
+    {
+        var footerButton = new FooterButtonDrawer();
+
+        if(isAdding)
+        {
+            footerButton.Draw("Save", () =>
+            {
+                string addingLine = string.Join(",", newLine);
+                csvLoader.AddLine(addingLine);
+                EndEditing();
+                Refresh();
+            });
+        }
+        else if(isEditingLine)
+        {
+            footerButton.Draw("Edit", () =>
+            {
+                string editingLine = string.Join(",", newLine);
+                csvLoader.Edit(editingLine);
+                EndEditing();
+                Refresh();
+            });
+        }
+
+        footerButton.Draw("Cancel", () =>
+        {
+            EndEditing();
+        });
+    }
+
+    private static void DrawNormalfooterButtons()
+    {
+        var footerButton = new FooterButtonDrawer();
+        footerButton.Draw("+", () => isAdding = true);
+        footerButton.Draw("Refresh", Refresh);
+    }
+
+    private void EndEditing()
+    {
+        newLine = null;
+        isAdding = false;
+        isEditingLine = false;
+        editingLineIndex = -1;
     }
 
     private static void Refresh()
