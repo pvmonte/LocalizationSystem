@@ -12,6 +12,7 @@ public class CsvLoader
 
     public TextAsset csvFile { get; private set; }
     public string[] lines { get; private set; }
+    public string[] keys { get; private set; }
 
     Dictionary<string, Dictionary<string, string>> languageDictionaryPair { get; } = new Dictionary<string, Dictionary<string, string>>();
     public string absolutePath { get; } = "Assets/LocalizationSystem/Resources/localization.csv";
@@ -19,17 +20,33 @@ public class CsvLoader
     public CsvLoader()
     {
         LoadCsv();
+        InitializeCsv();
     }
 
     public void LoadCsv()
     {
-        csvFile = Resources.Load<TextAsset>(csvResourcesPath);
+        if (File.Exists(absolutePath))
+        {
+            csvFile = Resources.Load<TextAsset>(csvResourcesPath);
+        }
+        else
+        {
+            string header = "KEYS,EN";
+            File.WriteAllText(absolutePath, header);
+        }
+        
+    }
+
+    void InitializeCsv()
+    {
         LinesAsArray();
+        ExtractKeys();
         InitializeLanguageDictionaries();
     }
 
     public string GetLanguageDictionaryPairValue(string lang, string key)
     {
+        Debug.Log(languageDictionaryPair[lang][key]);
         return languageDictionaryPair[lang][key];
     }
 
@@ -49,6 +66,18 @@ public class CsvLoader
         lines = csvFile.text.Split(lineSeparator);
     }
 
+    void ExtractKeys()
+    {
+        keys = new string[lines.Length];
+
+        for (int i = 0; i < keys.Length; i++)
+        {
+            keys[i] = lines[i].Split(fieldSeparators)[0];
+        }
+
+        Debug.Log(keys[0]);
+    }
+
     Dictionary<string, string> GetDictionary(string language)
     {
         Dictionary<string, string> collection = new Dictionary<string, string>();
@@ -56,7 +85,6 @@ public class CsvLoader
 
         string[] languages = lines[0].Split(fieldSeparators);
 
-        //starting at 1 to ignore keys
         for (int i = 0; i < languages.Length; i++)
         {
             if (language == languages[i])
@@ -74,45 +102,6 @@ public class CsvLoader
         }
 
         return collection;
-    }
-
-    public string GetLocalizedText(string key, string language)
-    {
-        int languageIndex = -1;
-
-        string[] languages = lines[0].Split(fieldSeparators);
-        string[] keys = ExtractFileKeys(lines);
-
-        //starting at 1 to ignore keys
-        for (int i = 1; i < languages.Length; i++)
-        {
-            if (language == languages[i])
-            {
-                languageIndex = i;
-                break;
-            }                
-        }
-
-        if (languageIndex == -1)
-            return string.Empty;
-        
-        var matchingLines = lines.Where(x => x.StartsWith(keys[languageIndex])).ToList();
-        var lineAsArray = matchingLines[0].Split(fieldSeparators);
-        return lineAsArray[languageIndex];
-    }
-
-    private string[] ExtractFileKeys(string[] lines)
-    {
-        string[] keys = new string[lines.Length];
-
-        for (int i = 0; i < lines.Length; i++)
-        {
-            string line = lines[i];
-
-            keys[i] = line.Split(fieldSeparators, System.StringSplitOptions.None)[0];
-        }
-
-        return keys;
     }
 
 #if UNITY_EDITOR
@@ -144,7 +133,6 @@ public class CsvLoader
     public void Remove(string key)
     {
         string[] lines = csvFile.text.Split(lineSeparator);
-        string[] keys = ExtractFileKeys(lines);
 
         int index = -1;
 

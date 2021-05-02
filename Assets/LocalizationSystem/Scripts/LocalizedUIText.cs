@@ -6,12 +6,13 @@ using UnityEngine.UI;
 public class LocalizedUIText : MonoBehaviour
 {
     Text uiText;
-    [SerializeField] string key;
+    [HideInInspector] public int keyIndex;
+    [HideInInspector] public string key;
 
     // Start is called before the first frame update
     void Start()
     {        
-        uiText = GetComponent<Text>();
+        uiText = GetComponent<Text>();        
 
         LocalizationController.instance.RegisterText(this);
         LoadText(LocalizationController.instance.language);
@@ -19,8 +20,8 @@ public class LocalizedUIText : MonoBehaviour
 
     public void LoadText(string language)
     {
-        print("loading Text");
-        uiText.text = LocalizationController.instance.csvLoader.GetLanguageDictionaryPairValue(language, key);
+        var csv = LocalizationController.instance.csvLoader;
+        uiText.text = csv.GetLanguageDictionaryPairValue(language, key);
     }
 
     private void OnDestroy()

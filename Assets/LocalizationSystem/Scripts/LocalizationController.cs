@@ -8,7 +8,7 @@ public class LocalizationController : MonoBehaviour
 
     public CsvLoader csvLoader { get; private set; }
     public SystemLanguage systemLanguage;
-    public string language;
+    [HideInInspector] public string language;
 
     List<LocalizedUIText> uiTexts = new List<LocalizedUIText>();
 
@@ -24,13 +24,8 @@ public class LocalizationController : MonoBehaviour
         }
 
         DontDestroyOnLoad(gameObject);
-    }
 
-    // Start is called before the first frame update
-    void Start()
-    {
         csvLoader = new CsvLoader();
-
         StartLanguage();
     }
 
