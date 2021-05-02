@@ -42,8 +42,6 @@ public class CsvLoader
             Dictionary<string, string> keyValuePairs = GetDictionary(languages[i]);
             languageDictionaryPair.Add(languages[i], keyValuePairs);
         }
-
-        Debug.Log(languageDictionaryPair["PT"]["cafe"]);
     }
 
     void LinesAsArray()
@@ -168,16 +166,14 @@ public class CsvLoader
             File.WriteAllText(absolutePath, replaced);
             UnityEditor.AssetDatabase.Refresh();
         }
-    }    
+    }  
 
-    public void Edit(string line)
+    public void Edit(int lineIndex, string newLine)
     {
-        string key = line.Split(fieldSeparators)[0];
+        lines[lineIndex] = newLine;
 
-        string[] editingLine = lines.Where(x => x.Split(fieldSeparators)[0] == key).ToArray();
-
-        Remove(key);
-        AddLineToEnd(line);
+        string allText = string.Join(lineSeparator.ToString(), lines);
+        File.WriteAllText(absolutePath, allText);
         UnityEditor.AssetDatabase.Refresh();
     }
 

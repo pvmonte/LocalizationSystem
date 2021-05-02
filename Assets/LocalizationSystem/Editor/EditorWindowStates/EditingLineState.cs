@@ -20,7 +20,8 @@
         footerButton.Draw("Edit", () =>
         {
             string editingLine = string.Join(",", newLine);
-            window.csvLoader.Edit(editingLine);
+            window.csvLoader.
+            Edit(editingLineIndex, editingLine);
             window.ChangeToState(new StandardState(window));
             window.Refresh();
         });
