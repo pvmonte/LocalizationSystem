@@ -13,7 +13,8 @@ public class CsvLoader
     public TextAsset csvFile { get; private set; }
     public string[] lines { get; private set; }
 
-    public string absolutePath { get; } = "Assets/Resources/localization.csv";
+    Dictionary<string, Dictionary<string, string>> languageDictionaryPair { get; } = new Dictionary<string, Dictionary<string, string>>();
+    public string absolutePath { get; } = "Assets/LocalizationSystem/Resources/localization.csv";
 
     public CsvLoader()
     {
@@ -24,6 +25,25 @@ public class CsvLoader
     {
         csvFile = Resources.Load<TextAsset>(csvResourcesPath);
         LinesAsArray();
+        InitializeLanguageDictionaries();
+    }
+
+    public string GetLanguageDictionaryPairValue(string lang, string key)
+    {
+        return languageDictionaryPair[lang][key];
+    }
+
+    private void InitializeLanguageDictionaries()
+    {
+        var languages = lines[0].Split(fieldSeparators);
+
+        for (int i = 0; i < languages.Length; i++)
+        {
+            Dictionary<string, string> keyValuePairs = GetDictionary(languages[i]);
+            languageDictionaryPair.Add(languages[i], keyValuePairs);
+        }
+
+        Debug.Log(languageDictionaryPair["PT"]["cafe"]);
     }
 
     void LinesAsArray()
@@ -31,6 +51,73 @@ public class CsvLoader
         lines = csvFile.text.Split(lineSeparator);
     }
 
+    Dictionary<string, string> GetDictionary(string language)
+    {
+        Dictionary<string, string> collection = new Dictionary<string, string>();
+        int languageIndex = -1;
+
+        string[] languages = lines[0].Split(fieldSeparators);
+
+        //starting at 1 to ignore keys
+        for (int i = 0; i < languages.Length; i++)
+        {
+            if (language == languages[i])
+            {
+                languageIndex = i;
+                break;
+            }
+        }
+
+        //Starting from 1 to ignore the header
+        for (int i = 1; i < lines.Length; i++)
+        {
+            var line = lines[i].Split(fieldSeparators);
+            collection.Add(line[0], line[languageIndex]);
+        }
+
+        return collection;
+    }
+
+    public string GetLocalizedText(string key, string language)
+    {
+        int languageIndex = -1;
+
+        string[] languages = lines[0].Split(fieldSeparators);
+        string[] keys = ExtractFileKeys(lines);
+
+        //starting at 1 to ignore keys
+        for (int i = 1; i < languages.Length; i++)
+        {
+            if (language == languages[i])
+            {
+                languageIndex = i;
+                break;
+            }                
+        }
+
+        if (languageIndex == -1)
+            return string.Empty;
+        
+        var matchingLines = lines.Where(x => x.StartsWith(keys[languageIndex])).ToList();
+        var lineAsArray = matchingLines[0].Split(fieldSeparators);
+        return lineAsArray[languageIndex];
+    }
+
+    private string[] ExtractFileKeys(string[] lines)
+    {
+        string[] keys = new string[lines.Length];
+
+        for (int i = 0; i < lines.Length; i++)
+        {
+            string line = lines[i];
+
+            keys[i] = line.Split(fieldSeparators, System.StringSplitOptions.None)[0];
+        }
+
+        return keys;
+    }
+
+#if UNITY_EDITOR
     public void AddLine(string line)
     {
         var key = line.Split(fieldSeparators)[0];
@@ -59,14 +146,7 @@ public class CsvLoader
     public void Remove(string key)
     {
         string[] lines = csvFile.text.Split(lineSeparator);
-        string[] keys = new string[lines.Length];
-
-        for (int i = 0; i < lines.Length; i++)
-        {
-            string line = lines[i];
-
-            keys[i] = line.Split(fieldSeparators, System.StringSplitOptions.None)[0];
-        }
+        string[] keys = ExtractFileKeys(lines);
 
         int index = -1;
 
@@ -88,7 +168,7 @@ public class CsvLoader
             File.WriteAllText(absolutePath, replaced);
             UnityEditor.AssetDatabase.Refresh();
         }
-    }
+    }    
 
     public void Edit(string line)
     {
@@ -122,4 +202,5 @@ public class CsvLoader
 
         UnityEditor.AssetDatabase.Refresh();
     }
+#endif
 }
