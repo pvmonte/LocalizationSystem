@@ -19,22 +19,28 @@ public class CsvLoader
 
     public CsvLoader()
     {
+        if(!File.Exists(absolutePath))
+        {
+            Debug.Log("creating");
+            CreateCsv();
+        }
+
+        UnityEditor.AssetDatabase.Refresh();
         LoadCsv();
         InitializeCsv();
     }
 
+    public void CreateCsv()
+    {
+        string header = "KEYS,EN";
+        File.WriteAllText(absolutePath, header);
+    }
+
     public void LoadCsv()
     {
-        if (File.Exists(absolutePath))
-        {
-            csvFile = Resources.Load<TextAsset>(csvResourcesPath);
-        }
-        else
-        {
-            string header = "KEYS,EN";
-            File.WriteAllText(absolutePath, header);
-        }
-        
+        Debug.Log("loading");
+        Debug.Log(File.Exists(absolutePath));
+        csvFile = Resources.Load<TextAsset>(csvResourcesPath);
     }
 
     void InitializeCsv()

@@ -16,7 +16,7 @@ public class LocalizationWindow : EditorWindow
     static float usableWidth;
     private Vector2 scrollPos;
 
-    [MenuItem("Window/Localization")]
+    [MenuItem("Localization/Open Window")]
     public static void ShowWindow()
     {
         thisWindow = GetWindow<LocalizationWindow>("Localization Manager");
