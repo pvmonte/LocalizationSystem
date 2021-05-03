@@ -47,6 +47,7 @@ public class LocalizationWindow : EditorWindow
         usableWidth = windowWidth - endLineButtonsSize * 3;
 
         InitializeWindow();
+
         if (csvLoader == null)
             InitializeRows();
 
